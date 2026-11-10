@@ -1,3 +1,15 @@
+# ********************************* OUTPUT ********************************** #
+
+TAG			=	minishell
+RESET		=	\033[0m
+C_TAG		=	\033[1;34m
+C_BUILD		=	\033[0;32m
+C_DONE		=	\033[1;32m
+C_CLEAN		=	\033[0;33m
+C_RM		=	\033[0;31m
+LOG			=	printf "$(C_TAG)%-12s$(RESET) %b%-10s$(RESET) %s\n" "[$(TAG)]"
+SUBMAKE		=	$(MAKE) -s --no-print-directory -C
+
 NAME		=	minishell
 CC			=	cc
 CFLAGS		=	-Wall -Wextra -Werror
@@ -55,23 +67,25 @@ all:		$(NAME)
 
 $(NAME):	$(LIBFT) $(OBJS)
 	@$(CC) $(CFLAGS) $(OBJS) $(LDLIBS) -o $(NAME)
-	@printf "\033[1;34mminishell: done\033[0m\n"
+	@$(LOG) "$(C_DONE)" linked "$(NAME)"
 
 $(LIBFT):
-	@$(MAKE) -C $(LIBFT_DIR) --no-print-directory
+	@$(SUBMAKE) $(LIBFT_DIR)
 
 $(OBJ_DIR)/%.o:	$(SRC_DIR)/%.c include/minishell.h
 	@mkdir -p $(dir $@)
-	@printf "\033[1;32mCompiling \033[1;34m$<\033[0m\n"
+	@$(LOG) "$(C_BUILD)" compiling "$<"
 	@$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 clean:
-	@$(MAKE) -C $(LIBFT_DIR) clean --no-print-directory
+	@$(SUBMAKE) $(LIBFT_DIR) clean
 	@$(RM) $(OBJ_DIR)
+	@$(LOG) "$(C_CLEAN)" cleaned objects
 
 fclean:		clean
-	@$(MAKE) -C $(LIBFT_DIR) fclean --no-print-directory
+	@$(SUBMAKE) $(LIBFT_DIR) fclean
 	@$(RM) $(NAME)
+	@$(LOG) "$(C_RM)" removed "$(NAME)"
 
 re:			fclean all
 
