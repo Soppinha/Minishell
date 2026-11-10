@@ -1,121 +1,134 @@
+*This project has been created as part of the 42 curriculum by svaladar.*
+
 <p align="center">
   <img src="https://raw.githubusercontent.com/ayogun/42-project-badges/main/badges/minishellm.png" alt="minishell badge"/>
 </p>
 
-<h1 align="center">minishell</h1>
+# minishell
 
-<p align="center">
-  <b><i>As beautiful as a shell — projeto da 42 São Paulo.</i></b>
-</p>
+## Description
 
----
+**minishell** is a simplified version of `bash`, written in C. It reads a command line, splits it into tokens, builds a syntax tree, expands variables and runs the commands as processes connected by pipes and redirections, while handling signals the way bash does.
 
-## 📖 Sobre
+### Features
 
-O **minishell** é uma versão simplificada do `bash`, escrita em C. O projeto envolve leitura de linha de comando, análise léxica e sintática, expansão de variáveis, execução de processos, pipes, redirecionamentos e tratamento de sinais.
-
-## ✨ Funcionalidades
-
-### Obrigatórias
-- Prompt interativo com **histórico** (via `readline`)
-- Busca e execução de binários pelo `PATH`, ou por caminho relativo/absoluto
-- Aspas simples `'` (sem interpretação) e duplas `"` (expandem apenas `$`)
-- Redirecionamentos:
-  - `<` entrada
-  - `>` saída
-  - `>>` saída em modo append
-  - `<<` heredoc (com expansão de variáveis quando o delimitador não está entre aspas)
+**Mandatory**
+- Interactive prompt with **history** (through `readline`)
+- Runs binaries found in `PATH`, or given by a relative or absolute path
+- Single quotes `'` (no interpretation) and double quotes `"` (only `$` is expanded)
+- Redirections:
+  - `<` input
+  - `>` output
+  - `>>` output in append mode
+  - `<<` heredoc (variables are expanded when the delimiter is not quoted)
 - Pipes `|`
-- Variáveis de ambiente `$VAR` e status de saída `$?`
-- Sinais `ctrl-C`, `ctrl-D` e `ctrl-\` com o mesmo comportamento do bash
+- Environment variables `$VAR` and the exit status `$?`
+- `ctrl-C`, `ctrl-D` and `ctrl-\` behave like in bash
 
-### Built-ins
-| Comando | Descrição |
+**Built-ins**
+
+| Command | Description |
 | :-- | :-- |
-| `echo` | Com a opção `-n` |
-| `cd` | Caminho relativo ou absoluto |
-| `pwd` | Sem opções |
-| `export` | Sem opções |
-| `unset` | Sem opções |
-| `env` | Sem opções ou argumentos |
-| `exit` | Sem opções |
+| `echo` | With the `-n` option |
+| `cd` | Relative or absolute path |
+| `pwd` | No options |
+| `export` | No options |
+| `unset` | No options |
+| `env` | No options or arguments |
+| `exit` | No options |
 
-### Bônus
-- Operadores lógicos `&&` e `||`
-- Parênteses `( )` para prioridade (subshell)
-- Wildcard `*` no diretório atual
+**Bonus**
+- Logical operators `&&` and `||`
+- Parentheses `( )` for priority (run in a subshell)
+- Wildcard `*` in the current directory
 
-## 🏗️ Arquitetura
+### Architecture
+
+Each input line goes through four stages:
 
 ```
- entrada ─► lexer ─► parser ─► expander ─► executor
-            tokens    AST       palavras     fork / pipe / execve
+ input ─► lexer ─► parser ─► expander ─► executor
+          tokens    AST       words       fork / pipe / execve
 ```
+
+1. **Lexer**: splits the line into words and operators (`|`, `<`, `>>`, `&&`, `(`...), keeping track of quotes.
+2. **Parser**: builds an **AST**. Pipes and logical operators become nodes, commands with their redirections become leaves, and syntax errors are reported here.
+3. **Expander**: replaces `$VAR` and `$?`, removes quotes and expands `*`.
+4. **Executor**: walks the tree. A built-in that runs on its own executes in the shell process itself, so `cd`, `export`, `unset` and `exit` can change the shell's state. Every other command is forked and run with `execve`. All heredocs are read before execution starts.
+
+### Structure
 
 ```
 .
 ├── include/minishell.h
-├── libft/            # biblioteca própria (submódulo)
+├── libft/            # my own library (git submodule)
 └── src/
     ├── main.c
-    ├── shell/        # loop principal, prompt e histórico
-    ├── env/          # lista de variáveis de ambiente
-    ├── lexer/        # tokenização da entrada
-    ├── parser/       # construção da AST
-    ├── expander/     # $VAR, $?, aspas e wildcards
-    ├── heredoc/      # leitura e expansão de heredocs
-    ├── executor/     # execução, pipes, redirecionamentos e PATH
-    ├── builtins/     # comandos internos
-    ├── signals/      # tratamento de sinais
-    └── utils/        # saída e limpeza
+    ├── shell/        # main loop, prompt and history
+    ├── env/          # environment variable list
+    ├── lexer/        # tokenization
+    ├── parser/       # AST construction
+    ├── expander/     # $VAR, $?, quotes and wildcards
+    ├── heredoc/      # heredoc reading and expansion
+    ├── executor/     # execution, pipes, redirections and PATH lookup
+    ├── builtins/     # built-in commands
+    ├── signals/      # signal handling
+    └── utils/        # exit and cleanup
 ```
 
-## 🛠️ Compilação
+## Instructions
 
-Requisitos: `cc`, `make` e a biblioteca `readline`.
+### Requirements
+
+`cc`, `make` and the `readline` library (on Debian/Ubuntu: `sudo apt install libreadline-dev`).
+
+### Cloning
+
+[libft](https://github.com/Soppinha/libft) is a submodule, and it has [ft_printf](https://github.com/Soppinha/ft_printf) and [get_next_line](https://github.com/Soppinha/GNL) as submodules of its own, so clone recursively:
 
 ```bash
-git clone --recurse-submodules <url-do-repositorio>
-cd minishell
-make
+git clone --recurse-submodules https://github.com/Soppinha/Minishell.git
+cd Minishell
 ```
 
-Se o repositório já foi clonado sem os submódulos:
+If the repository was cloned without the submodules:
 
 ```bash
-git submodule update --init
+git submodule update --init --recursive
 ```
 
-| Regra | Ação |
-| :-- | :-- |
-| `make` | Compila a libft e o minishell |
-| `make clean` | Remove os objetos |
-| `make fclean` | Remove objetos e binários |
-| `make re` | Recompila do zero |
+### Compilation
 
-## 🚀 Uso
+```bash
+make          # builds libft and minishell
+make bonus    # same as make: the bonus is built in
+make clean    # removes the object files
+make fclean   # also removes the binary and libft.a
+make re       # rebuilds everything
+```
+
+### Usage
 
 ```bash
 ./minishell
 ```
 
 ```bash
-minishell$ echo "Olá, $USER" | tr a-z A-Z > saida.txt
+minishell$ echo "Hello, $USER" | tr a-z A-Z > out.txt
 minishell$ cat << EOF
-> linha 1
+> line 1
 > EOF
-minishell$ ls *.c && echo ok || echo falhou
+minishell$ ls *.c && echo ok || echo failed
 minishell$ (cd /tmp && pwd) || echo $?
 ```
 
-## 📚 Bibliotecas
+## Resources
 
-<p align="left">
-  <a href="libft"><img src="https://raw.githubusercontent.com/ayogun/42-project-badges/main/badges/libftm.png" alt="libft badge" height="100"/></a>
-</p>
+- [Bash Reference Manual](https://www.gnu.org/software/bash/manual/bash.html), especially *Shell Operation*, *Quoting* and *Redirections*
+- `man 3 readline`, `man 2 fork`, `man 2 execve`, `man 2 pipe`, `man 2 dup2`, `man 2 waitpid`, `man 7 signal`
+- [Writing your own shell – Stephen Brennan](https://brennan.io/2015/01/16/write-a-shell-in-c/)
+- [Abstract syntax tree – Wikipedia](https://en.wikipedia.org/wiki/Abstract_syntax_tree)
 
-Este projeto utiliza a [libft](libft), minha biblioteca própria que inclui `ft_printf` e `get_next_line`.
+### AI usage
 
----
-
-<p align="center">Feito por <a href="https://github.com/Soppinha">svaladar</a> · 42 São Paulo</p>
+AI was used to draft this README from the existing source code. The implementation was written by the author.
